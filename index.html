@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Game of life</title>
+</head>
+<body>
+<script type="text/javascript" src="figures/glider.js"></script>
+<script type="text/javascript" src="figures/planner.js"></script>
+<script type="text/javascript" src="index.js"></script>
+<script>
+</script>
+<script>
+  function visualizePoolGrid(poolGrid) {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    for (let i = 0; i < poolGrid.length; i++) {
+      const row = poolGrid[i];
+      for (let j = 0; j < row.length; j++) {
+        const col = row[j];
+        const div = document.createElement('div');
+        div.style.width = '10px';
+        div.style.height = '10px';
+        div.style.border = '1px solid black';
+        div.style.backgroundColor = col === '1' ? 'black' : 'white';
+        div.style.position = 'absolute';
+        div.style.left = `${j * 10}px`;
+        div.style.top = `${i * 10}px`;
+        document.body.appendChild(div);
+      }
+    }
+  }
+
+  const getCycles = (data) => {
+    let count = 0
+    let newData = data
+    const intervalId = setInterval(() => {
+      visualizePoolGrid(newData)
+      newData = getCycle(newData)
+      if (count >= 10) {
+        clearInterval(intervalId)
+      }
+      count += 1
+    }, 1000)
+  }
+  getCycles(planner)
+</script>
+</body>
+</html>
