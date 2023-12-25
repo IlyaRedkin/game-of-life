@@ -34,22 +34,20 @@ const POINT_STATE = {
 }
 const MIN_NEIGHBOURS = 2
 const MAX_NEIGHBOURS = 3
-const getPointPosition = (point, map) => {
-  const mapH = map.length
-  const mapW = map[0].length
-  const {x, y} = point
-  const realX = x >= 0 && x < mapW ? x : (mapW - Math.abs(x)) % mapW
-  const realY = y >= 0 && y < mapH ? y : (mapH - Math.abs(y)) % mapH
-  return {y: realY, x: realX}
-}
 const getState = (point, map) => {
-  return map[point.y][point.x]
+  return map?.[point.y]?.[point.x] || POINT_STATE.DEAD
 }
-const getPointState = (point, map) => {
-  const neighbours = getNeighbours(point)
-  const pointState = getState(getPointPosition(point, map), map)
+// const getPointPosition = ({ point, mapHeight, mapWidth }) => {
+//   const {x, y} = point
+//   const realX = x >= 0 && x < mapWidth ? x : (mapWidth - Math.abs(x)) % mapWidth
+//   const realY = y >= 0 && y < mapHeight ? y : (mapHeight - Math.abs(y)) % mapHeight
+//   return {y: realY, x: realX}
+// }
+
+const getPointState = ({point, mapHeight, mapWidth, aliveMap, neighbours}) => {
+  const pointState = getState(getPointPosition({point, mapHeight, mapWidth}), aliveMap)
   const aliveNeighbours = Object.values(neighbours).filter((neighbour) => {
-    return getState(getPointPosition(neighbour, map), map) === POINT_STATE.ALIVE
+    return getState(getPointPosition({point: neighbour, mapHeight, mapWidth}), aliveMap) === POINT_STATE.ALIVE
   })
 
   if (aliveNeighbours.length === MAX_NEIGHBOURS) {
@@ -61,12 +59,78 @@ const getPointState = (point, map) => {
   return POINT_STATE.DEAD
 }
 
-const getCycle = (map) => {
-  const mapCopy = map.map((line) => [...line])
-  for (let y = 0; y < map.length; y++) {
-    for (let x = 0; x < map[0].length; x++) {
-      mapCopy[y][x] = getPointState({x, y}, map)
-    }
+const setAliveMapValue = (aliveMap, point, state, mapHeight, mapWidth) => {
+  const realPoint = getPointPosition({point, mapHeight, mapWidth})
+  if (!aliveMap[realPoint.y]) {
+    aliveMap[realPoint.y] = {}
   }
-  return mapCopy
+  aliveMap[realPoint.y][realPoint.x] = state
 }
+const getCycle = ({pointsToCheck, mapHeight, mapWidth, aliveMap}) => {
+  const newAliveMap = {}
+  const nextCyclePointsToCheck = new Map()
+  pointsToCheck.forEach((pointToCheck) => {
+    const neighbours = getNeighbours(pointToCheck)
+    const checkedPointState = getPointState({point: pointToCheck, mapHeight, mapWidth, aliveMap, neighbours})
+    setAliveMapValue(newAliveMap, pointToCheck, checkedPointState, mapHeight, mapWidth)
+    if (getState(pointToCheck, aliveMap) !== checkedPointState || checkedPointState === POINT_STATE.ALIVE) {
+      const arr = [
+        pointToCheck,
+        ...Object.values(neighbours),
+      ]
+      arr.reduce((acc, item) => {
+        const exists = acc.find((i) => i.x === item.x && i.y === item.y)
+        if (!exists) {
+          acc.push(item)
+        }
+        return acc
+      }, []).forEach((point) => {
+        nextCyclePointsToCheck.set(`${point.x}_${point.y}`, point)
+      })
+    }
+  })
+  return {
+    newAliveMap,
+    nextCyclePointsToCheck: Object.values(Object.fromEntries(nextCyclePointsToCheck))
+  }
+}
+
+const getPointsToCheck = (data) => {
+  const pointList = Object.entries(data).reduce((acc, [y, xObj]) => {
+    Object.keys(xObj).forEach((x) => {
+      acc.push({y: Number(y), x: Number(x)})
+    })
+    return acc
+  }, [])
+  const initialNeighbours = pointList.reduce((acc, point) => {
+    acc.push(...Object.values(getNeighbours(point)))
+    return acc
+  }, [])
+  return [...pointList, ...initialNeighbours]
+}
+
+// const getCyclesLocal = (data) => {
+//   let count = 0
+//   let cycleAliveMap = data
+//   const pointsToCheck = getPointsToCheck(data)
+//   while(count < 10) {
+//     cycleAliveMap = getCycle({pointsToCheck, mapHeight: 100, mapWidth: 100, aliveMap: cycleAliveMap})
+//     count += 1
+//   }
+//   return cycleAliveMap
+// }
+
+// const plannerMap = {
+//   0: {
+//     1: '1'
+//   },
+//   1: {
+//     1: '1',
+//     2: '1'
+//   },
+//   2: {
+//     0: '1',
+//     1: '1'
+//   }
+// }
+// console.log('getCyclesLocal', getCyclesLocal(plannerMap))

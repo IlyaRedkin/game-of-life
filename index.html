@@ -3,49 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <title>Game of life</title>
+  <link rel="stylesheet" href="index.css">
 </head>
 <body>
+<h1>Game of Life</h1>
+<script type="text/javascript" src="utils.js"></script>
 <script type="text/javascript" src="figures/glider.js"></script>
 <script type="text/javascript" src="figures/planner.js"></script>
 <script type="text/javascript" src="index.js"></script>
+<script type="text/javascript" src="canvas.js"></script>
 <script>
+  window.onload = function () {
+    initPage();
+  };
+
+  let scrollContainer
+  let canvasContext
+  let from = {x: 0, y: 0}
+  let to = {x: 100, y: 100}
+
+  function initPage() {
+    // scrollContainer = document.querySelector("#scroll-container");
+    canvasContext = getCanvasContext({width: scrollContainer?.clientWidth || 1000, height: scrollContainer?.clientHeight || 1000})
+
+    // scrollContainer.addEventListener("scroll", (event) => {
+    //   const {scrollTop, scrollLeft, clientWidth, clientHeight} = event.target || {};
+    //   from = {x: scrollLeft, y: scrollTop};
+    //   to = {x: scrollLeft + clientWidth, y: scrollTop + clientHeight};
+    // });
+  }
 </script>
 <script>
-  function visualizePoolGrid(poolGrid) {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    for (let i = 0; i < poolGrid.length; i++) {
-      const row = poolGrid[i];
-      for (let j = 0; j < row.length; j++) {
-        const col = row[j];
-        const div = document.createElement('div');
-        div.style.width = '10px';
-        div.style.height = '10px';
-        div.style.border = '1px solid black';
-        div.style.backgroundColor = col === '1' ? 'black' : 'white';
-        div.style.position = 'absolute';
-        div.style.left = `${j * 10}px`;
-        div.style.top = `${i * 10}px`;
-        document.body.appendChild(div);
-      }
-    }
+  let width = 50
+  const onWidthChange = (input) => {
+    width = Number(input.value)
+  }
+  let height = 50
+  const onHeightChange = (input) => {
+    height = Number(input.value)
   }
 
+  let intervalId
+  let count = 0
+  let cycleAliveMap
+  let pointsToCheck
   const getCycles = (data) => {
-    let count = 0
-    let newData = data
-    const intervalId = setInterval(() => {
-      visualizePoolGrid(newData)
-      newData = getCycle(newData)
-      if (count >= 10) {
-        clearInterval(intervalId)
-      }
+    cycleAliveMap = data
+    pointsToCheck = getPointsToCheck(cycleAliveMap)
+    intervalId = setInterval(() => {
+      // cycleAliveMap = getCycle(cycleAliveMap)
+      // console.log('cycleAliveMap', cycleAliveMap)
+      // console.log('pointsToCheck', pointsToCheck)
+      const {
+        newAliveMap,
+        nextCyclePointsToCheck
+      } = getCycle({pointsToCheck, mapHeight: height, mapWidth: width, aliveMap: cycleAliveMap})
+      pointsToCheck = nextCyclePointsToCheck
+      cycleAliveMap = newAliveMap
+      console.log('nextCyclePointsToCheck', nextCyclePointsToCheck)
+      console.log('newAliveMap', newAliveMap)
       count += 1
-    }, 1000)
+
+      updateGrid({
+        from,
+        to,
+        context: canvasContext,
+        dataMap: cycleAliveMap
+      });
+    }, 100)
   }
-  getCycles(planner)
+
+  const startGame = () => {
+    getCycles(plannerMap)
+  }
+  const stopGame = () => {
+    clearInterval(intervalId)
+  }
+
+  const updateField = () => {
+    // canvasContext = getCanvasContext({width: 1100 || scrollContainer.clientWidth, height: 1100 || scrollContainer.clientHeight})
+    const scrollEl = document.querySelector("#field-area");
+    // scrollEl.style.width = `${width * 10}px`
+    // scrollEl.style.height = `${height * 10}px`
+
+    from = {x: 0, y: 0}
+    to = {x: scrollEl?.clientWidth || 1000, y: scrollEl?.clientHeight || 1000}
+
+    updateGrid({
+      from,
+      to,
+      context: canvasContext
+    });
+  }
 </script>
+
+<div class="life-container">
+  <div class="life-options">
+    <div>
+      <div>Field options:</div>
+      <div>
+        <label for="field-width">Enter your field width:</label>
+        <input id="field-width" name="field-width" type="number" onkeyup="onWidthChange(this)" value="1000"/>
+        <label for="field-height">Enter your field height:</label>
+        <input id="field-height" name="field-height" type="number" onkeyup="onHeightChange(this)" value="1000"/>
+      </div>
+      <button onclick="updateField()">Submit new field</button>
+    </div>
+    <div>
+      <button onclick="startGame()">Start life</button>
+      <button onclick="stopGame()">Stop life</button>
+    </div>
+  </div>
+  <canvas id="canvas"></canvas>
+<!--  <div id="scroll-container">-->
+<!--    <div id="field-area"></div>-->
+<!--  </div>-->
+</div>
 </body>
 </html>
