@@ -13,18 +13,26 @@
 <script type="text/javascript" src="index.js"></script>
 <script type="text/javascript" src="canvas.js"></script>
 <script>
+  // defaults
+  let widthPx = 1000;
+  let heightPx = 1000;
+  let cellSizePx = 10;
+  const borderWidth = cellSizePx/10;
+</script>
+<script>
   window.onload = function () {
     initPage();
   };
 
-  let scrollContainer
+  // let scrollContainer
   let canvasContext
   let from = {x: 0, y: 0}
-  let to = {x: 100, y: 100}
+  let to = {x: widthPx, y: heightPx}
 
   function initPage() {
     // scrollContainer = document.querySelector("#scroll-container");
-    canvasContext = getCanvasContext({width: scrollContainer?.clientWidth || 1000, height: scrollContainer?.clientHeight || 1000})
+    // canvasContext = getCanvasContext({width: scrollContainer?.clientWidth || 1000, height: scrollContainer?.clientHeight || 1000})
+    canvasContext = getCanvasContext({width: widthPx, height: heightPx})
 
     // scrollContainer.addEventListener("scroll", (event) => {
     //   const {scrollTop, scrollLeft, clientWidth, clientHeight} = event.target || {};
@@ -34,9 +42,6 @@
   }
 </script>
 <script>
-  let width = 50
-  let height = 50
-
   let intervalId
   let count = 0
   let cycleAliveMap
@@ -51,7 +56,12 @@
       const {
         newAliveMap,
         nextCyclePointsToCheck
-      } = getCycle({pointsToCheck, mapHeight: height, mapWidth: width, aliveMap: cycleAliveMap})
+      } = getCycle({
+        pointsToCheck,
+        maxCellCountHeight: heightPx/cellSizePx,
+        maxCellCountWidth: widthPx/cellSizePx,
+        aliveMap: cycleAliveMap
+      })
       pointsToCheck = nextCyclePointsToCheck
       cycleAliveMap = newAliveMap
       console.log('nextCyclePointsToCheck', nextCyclePointsToCheck)
@@ -69,6 +79,7 @@
 
   const startGame = () => {
     getCycles(plannerMap)
+    // getCycles(gliderMap)
   }
   const stopGame = () => {
     clearInterval(intervalId)
@@ -76,12 +87,13 @@
 
   const updateField = () => {
     // canvasContext = getCanvasContext({width: 1100 || scrollContainer.clientWidth, height: 1100 || scrollContainer.clientHeight})
-    const scrollEl = document.querySelector("#field-area");
+    canvasContext = getCanvasContext({width: widthPx, height: heightPx})
+    // const scrollEl = document.querySelector("#field-area");
     // scrollEl.style.width = `${width * 10}px`
     // scrollEl.style.height = `${height * 10}px`
 
     from = {x: 0, y: 0}
-    to = {x: scrollEl?.clientWidth || 1000, y: scrollEl?.clientHeight || 1000}
+    to = {x: widthPx, y: heightPx}
 
     updateGrid({
       from,
@@ -104,23 +116,33 @@
       <div class="field-inputs">
         <div>Field options:</div>
         <div class="field-width-input">
-          <label for="field-width">Width:</label>
+          <label for="field-width">Width (px):</label>
           <input id="field-width" name="field-width" type="number" onkeyup="onWidthChange(this)"/>
           <script>
             const onWidthChange = (input) => {
-              width = Number(input.value)
+              widthPx = Number(input.value)
             }
-            document.getElementById("field-width").value = width;
+            document.getElementById("field-width").value = widthPx;
           </script>
         </div>
         <div class="field-height-input">
-          <label for="field-height">Height:</label>
+          <label for="field-height">Height (px):</label>
           <input id="field-height" name="field-height" type="number" onkeyup="onHeightChange(this)"/>
           <script>
             const onHeightChange = (input) => {
-              height = Number(input.value)
+              heightPx = Number(input.value)
             }
-            document.getElementById("field-height").value = height;
+            document.getElementById("field-height").value = heightPx;
+          </script>
+        </div>
+        <div class="cell-size-input">
+          <label for="cell-size">Cell (px):</label>
+          <input id="cell-size" name="cell-size" type="number" onkeyup="onCellSizeChange(this)"/>
+          <script>
+            const onCellSizeChange = (input) => {
+              cellSizePx = Number(input.value)
+            }
+            document.getElementById("cell-size").value = cellSizePx;
           </script>
         </div>
         <button onclick="updateField()">Apply field size</button>

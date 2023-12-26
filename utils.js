@@ -9,33 +9,19 @@ const getRealValue = (value, maxValue) => {
   return value
 }
 
-const getPointPosition = ({ point, mapHeight, mapWidth }) => {
+const getPointPosition = ({ point, maxCellCountHeight, maxCellCountWidth }) => {
   const {x, y} = point
-  const realX = getRealValue(x, mapWidth)
-  const realY = getRealValue(y, mapHeight)
-  if (y > mapHeight) {
+  const realX = getRealValue(x, maxCellCountWidth)
+  const realY = getRealValue(y, maxCellCountHeight)
+  if (y > maxCellCountHeight) {
     console.log('y', y)
     console.log('realY', realY)
   }
-  if (x > mapWidth) {
+  if (x > maxCellCountWidth) {
     console.log('x', x)
     console.log('realX', realX)
   }
   return {y: realY, x: realX}
-}
-
-const getEmptyField = ({width, height}) => {
-  return new Array(height).fill('').map(() => new Array(width).fill('').map(() => POINT_STATE.DEAD))
-}
-
-const updateFieldByAddedFigure = (startPoint, field, figure) => {
-  for (let y = 0; y < figure.length; y++) {
-    for (let x = 0; x < figure[0].length; x++) {
-      const putPoint = {y: startPoint.y + y, x: startPoint.x + x}
-      const possiblePointPosition = getPointPosition(putPoint, field)
-      field[possiblePointPosition.y][possiblePointPosition.x] = figure[y][x]
-    }
-  }
 }
 
 const getObjectFromArray = (arr) => {
@@ -44,7 +30,9 @@ const getObjectFromArray = (arr) => {
       acc[y] = {}
     }
     xLine.forEach((state, x) => {
-      acc[y][x] = state
+      if (state === '1') {
+        acc[y][x] = state
+      }
     })
     return acc
   }, {})

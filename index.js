@@ -44,10 +44,23 @@ const getState = (point, map) => {
 //   return {y: realY, x: realX}
 // }
 
-const getPointState = ({point, mapHeight, mapWidth, aliveMap, neighbours}) => {
-  const pointState = getState(getPointPosition({point, mapHeight, mapWidth}), aliveMap)
+const getPointState = ({point, maxCellCountHeight, maxCellCountWidth, aliveMap, neighbours}) => {
+  const pointState = getState(
+    getPointPosition({
+      point,
+      maxCellCountHeight,
+      maxCellCountWidth
+    }),
+    aliveMap)
   const aliveNeighbours = Object.values(neighbours).filter((neighbour) => {
-    return getState(getPointPosition({point: neighbour, mapHeight, mapWidth}), aliveMap) === POINT_STATE.ALIVE
+    return getState(
+      getPointPosition({
+        point: neighbour,
+        maxCellCountHeight,
+        maxCellCountWidth
+      }),
+      aliveMap
+    ) === POINT_STATE.ALIVE
   })
 
   if (aliveNeighbours.length === MAX_NEIGHBOURS) {
@@ -59,20 +72,30 @@ const getPointState = ({point, mapHeight, mapWidth, aliveMap, neighbours}) => {
   return POINT_STATE.DEAD
 }
 
-const setAliveMapValue = (aliveMap, point, state, mapHeight, mapWidth) => {
-  const realPoint = getPointPosition({point, mapHeight, mapWidth})
+const setAliveMapValue = (aliveMap, point, state, maxCellCountHeight, maxCellCountWidth) => {
+  const realPoint = getPointPosition({
+    point,
+    maxCellCountHeight,
+    maxCellCountWidth
+  })
   if (!aliveMap[realPoint.y]) {
     aliveMap[realPoint.y] = {}
   }
   aliveMap[realPoint.y][realPoint.x] = state
 }
-const getCycle = ({pointsToCheck, mapHeight, mapWidth, aliveMap}) => {
+const getCycle = ({pointsToCheck, maxCellCountHeight, maxCellCountWidth, aliveMap}) => {
   const newAliveMap = {}
   const nextCyclePointsToCheck = new Map()
   pointsToCheck.forEach((pointToCheck) => {
     const neighbours = getNeighbours(pointToCheck)
-    const checkedPointState = getPointState({point: pointToCheck, mapHeight, mapWidth, aliveMap, neighbours})
-    setAliveMapValue(newAliveMap, pointToCheck, checkedPointState, mapHeight, mapWidth)
+    const checkedPointState = getPointState({
+      point: pointToCheck,
+      maxCellCountHeight,
+      maxCellCountWidth,
+      aliveMap,
+      neighbours
+    })
+    setAliveMapValue(newAliveMap, pointToCheck, checkedPointState, maxCellCountHeight, maxCellCountWidth)
     if (getState(pointToCheck, aliveMap) !== checkedPointState || checkedPointState === POINT_STATE.ALIVE) {
       const arr = [
         pointToCheck,
