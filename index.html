@@ -14,31 +14,52 @@
 <script type="text/javascript" src="canvas.js"></script>
 <script>
   // defaults
-  let widthPx = 1000;
-  let heightPx = 1000;
+  let widthPx = 500;
+  let heightPx = 500;
   let cellSizePx = 10;
-  const borderWidth = cellSizePx/10;
+  let intervalTime = 10;
 </script>
 <script>
   window.onload = function () {
     initPage();
   };
 
-  // let scrollContainer
+  let scrollContainer
   let canvasContext
+  let scrollEl
+
   let from = {x: 0, y: 0}
   let to = {x: widthPx, y: heightPx}
 
-  function initPage() {
-    // scrollContainer = document.querySelector("#scroll-container");
-    // canvasContext = getCanvasContext({width: scrollContainer?.clientWidth || 1000, height: scrollContainer?.clientHeight || 1000})
-    canvasContext = getCanvasContext({width: widthPx, height: heightPx})
+  function updateScrollContainer() {
+    scrollContainer = document.querySelector("#scroll-container");
+  }
 
-    // scrollContainer.addEventListener("scroll", (event) => {
-    //   const {scrollTop, scrollLeft, clientWidth, clientHeight} = event.target || {};
-    //   from = {x: scrollLeft, y: scrollTop};
-    //   to = {x: scrollLeft + clientWidth, y: scrollTop + clientHeight};
-    // });
+  function updateCanvasContext() {
+    canvasContext = getCanvasContext({width: scrollContainer?.clientWidth, height: scrollContainer?.clientHeight})
+  }
+
+  function updateFieldArea() {
+    scrollEl = document.querySelector("#field-area");
+    scrollEl.style.width = `${widthPx}px`
+    scrollEl.style.height = `${heightPx}px`
+
+    from = {x: 0, y: 0};
+    to = {x: widthPx, y: heightPx}
+
+    canvasContext.clearRect(0, 0, scrollContainer?.clientWidth, scrollContainer?.clientHeight)
+  }
+
+  function initPage() {
+    updateScrollContainer()
+    updateCanvasContext()
+    updateFieldArea()
+
+    scrollContainer.addEventListener("scroll", (event) => {
+      const {scrollTop, scrollLeft, clientWidth, clientHeight} = event.target || {};
+      from = {x: scrollLeft, y: scrollTop};
+      to = {x: scrollLeft + clientWidth, y: scrollTop + clientHeight};
+    });
   }
 </script>
 <script>
@@ -50,16 +71,13 @@
     cycleAliveMap = data
     pointsToCheck = getPointsToCheck(cycleAliveMap)
     intervalId = setInterval(() => {
-      // cycleAliveMap = getCycle(cycleAliveMap)
-      // console.log('cycleAliveMap', cycleAliveMap)
-      // console.log('pointsToCheck', pointsToCheck)
       const {
         newAliveMap,
         nextCyclePointsToCheck
       } = getCycle({
         pointsToCheck,
-        maxCellCountHeight: heightPx/cellSizePx,
-        maxCellCountWidth: widthPx/cellSizePx,
+        maxCellCountHeight: heightPx / cellSizePx,
+        maxCellCountWidth: widthPx / cellSizePx,
         aliveMap: cycleAliveMap
       })
       pointsToCheck = nextCyclePointsToCheck
@@ -73,7 +91,7 @@
         context: canvasContext,
         dataMap: cycleAliveMap
       });
-    }, 100)
+    }, intervalTime)
   }
 
   const startGame = () => {
@@ -85,14 +103,9 @@
   }
 
   const updateField = () => {
-    // canvasContext = getCanvasContext({width: 1100 || scrollContainer.clientWidth, height: 1100 || scrollContainer.clientHeight})
-    canvasContext = getCanvasContext({width: widthPx, height: heightPx})
-    // const scrollEl = document.querySelector("#field-area");
-    // scrollEl.style.width = `${width * 10}px`
-    // scrollEl.style.height = `${height * 10}px`
-
-    from = {x: 0, y: 0}
-    to = {x: widthPx, y: heightPx}
+    updateScrollContainer()
+    updateCanvasContext()
+    updateFieldArea()
 
     updateGrid({
       from,
@@ -144,15 +157,27 @@
             document.getElementById("cell-size").value = cellSizePx;
           </script>
         </div>
+        <div class="interval-time-input">
+          <label for="interval-time">Interval time (ms):</label>
+          <input id="interval-time" name="cell-size" type="number" onkeyup="onIntervalTimeChange(this)"/>
+          <script>
+            const onIntervalTimeChange = (input) => {
+              intervalTime = Number(input.value)
+            }
+            document.getElementById("interval-time").value = intervalTime;
+          </script>
+        </div>
         <button onclick="updateField()">Apply field size</button>
       </div>
     </div>
 
   </div>
-  <canvas id="canvas"></canvas>
-<!--  <div id="scroll-container">-->
-<!--    <div id="field-area"></div>-->
-<!--  </div>-->
+  <div class="canvas-wrapper">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div id="scroll-container">
+    <div id="field-area"></div>
+  </div>
 </div>
 </body>
 </html>

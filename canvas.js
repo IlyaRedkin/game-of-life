@@ -15,16 +15,12 @@ const getFieldSize = ({ width: widthCount, height: heightCount }) => {
 }
 
 const drawGrid = ({ i, j, x, y, context, dataMap }) => {
-  const startXpx = j * cellSizePx + 2 * borderWidth;
-  const startYpx = i * cellSizePx + 2 * borderWidth;
-  // border rect
-  context.beginPath();
-  context.fillStyle = '#000000';
-  context.fillRect(startXpx, startYpx, cellSizePx, cellSizePx);
-  // "life" rect
+  const startXpx = j * cellSizePx;
+  const startYpx = i * cellSizePx;
+    // "life" rect
   context.beginPath();
   context.fillStyle = dataMap?.[y]?.[x] === '1' ? '#000000' : '#FFFFFF';
-  context.fillRect(startXpx + borderWidth, startYpx + borderWidth, cellSizePx - 2 * borderWidth, cellSizePx - 2 * borderWidth);
+  context.fillRect(startXpx, startYpx, cellSizePx, cellSizePx);
 }
 
 const getCellPoint = (px) => parseInt(px/cellSizePx, 10)
@@ -42,6 +38,3 @@ const updateGrid = ({ from, to, context, dataMap }) => {
     }
   }
 }
-
-
-
