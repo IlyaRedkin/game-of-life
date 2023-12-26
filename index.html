@@ -35,13 +35,7 @@
 </script>
 <script>
   let width = 50
-  const onWidthChange = (input) => {
-    width = Number(input.value)
-  }
   let height = 50
-  const onHeightChange = (input) => {
-    height = Number(input.value)
-  }
 
   let intervalId
   let count = 0
@@ -99,20 +93,40 @@
 
 <div class="life-container">
   <div class="life-options">
-    <div>
-      <div>Field options:</div>
-      <div>
-        <label for="field-width">Enter your field width:</label>
-        <input id="field-width" name="field-width" type="number" onkeyup="onWidthChange(this)" value="1000"/>
-        <label for="field-height">Enter your field height:</label>
-        <input id="field-height" name="field-height" type="number" onkeyup="onHeightChange(this)" value="1000"/>
+    <div class="field-controls">
+      <div class="life-controls">
+        <button onclick="startGame()">Start life</button>
+        <button onclick="stopGame()">Stop life</button>
       </div>
-      <button onclick="updateField()">Submit new field</button>
+      <div class="forms-of-life">
+        <div>Forms of life:</div>
+      </div>
+      <div class="field-inputs">
+        <div>Field options:</div>
+        <div class="field-width-input">
+          <label for="field-width">Width:</label>
+          <input id="field-width" name="field-width" type="number" onkeyup="onWidthChange(this)"/>
+          <script>
+            const onWidthChange = (input) => {
+              width = Number(input.value)
+            }
+            document.getElementById("field-width").value = width;
+          </script>
+        </div>
+        <div class="field-height-input">
+          <label for="field-height">Height:</label>
+          <input id="field-height" name="field-height" type="number" onkeyup="onHeightChange(this)"/>
+          <script>
+            const onHeightChange = (input) => {
+              height = Number(input.value)
+            }
+            document.getElementById("field-height").value = height;
+          </script>
+        </div>
+        <button onclick="updateField()">Apply field size</button>
+      </div>
     </div>
-    <div>
-      <button onclick="startGame()">Start life</button>
-      <button onclick="stopGame()">Stop life</button>
-    </div>
+
   </div>
   <canvas id="canvas"></canvas>
 <!--  <div id="scroll-container">-->

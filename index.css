@@ -14,3 +14,23 @@
 #canvas {
   position: absolute;
 }
+
+.field-controls {
+  display: flex;
+  gap: 16px;
+}
+.field-inputs {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+}
+.life-controls {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.life-controls button {
+  height: 100%;
+}
