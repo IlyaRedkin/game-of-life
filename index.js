@@ -37,12 +37,6 @@ const MAX_NEIGHBOURS = 3
 const getState = (point, map) => {
   return map?.[point.y]?.[point.x] || POINT_STATE.DEAD
 }
-// const getPointPosition = ({ point, mapHeight, mapWidth }) => {
-//   const {x, y} = point
-//   const realX = x >= 0 && x < mapWidth ? x : (mapWidth - Math.abs(x)) % mapWidth
-//   const realY = y >= 0 && y < mapHeight ? y : (mapHeight - Math.abs(y)) % mapHeight
-//   return {y: realY, x: realX}
-// }
 
 const getPointState = ({point, maxCellCountHeight, maxCellCountWidth, aliveMap, neighbours}) => {
   const pointState = getState(
@@ -85,7 +79,7 @@ const setAliveMapValue = (aliveMap, point, state, maxCellCountHeight, maxCellCou
 }
 const getCycle = ({pointsToCheck, maxCellCountHeight, maxCellCountWidth, aliveMap}) => {
   const newAliveMap = {}
-  const nextCyclePointsToCheck = new Map()
+  const nextCyclePointsToCheck = {}
   pointsToCheck.forEach((pointToCheck) => {
     const neighbours = getNeighbours(pointToCheck)
     const checkedPointState = getPointState({
@@ -97,24 +91,15 @@ const getCycle = ({pointsToCheck, maxCellCountHeight, maxCellCountWidth, aliveMa
     })
     setAliveMapValue(newAliveMap, pointToCheck, checkedPointState, maxCellCountHeight, maxCellCountWidth)
     if (getState(pointToCheck, aliveMap) !== checkedPointState || checkedPointState === POINT_STATE.ALIVE) {
-      const arr = [
-        pointToCheck,
-        ...Object.values(neighbours),
-      ]
-      arr.reduce((acc, item) => {
-        const exists = acc.find((i) => i.x === item.x && i.y === item.y)
-        if (!exists) {
-          acc.push(item)
-        }
-        return acc
-      }, []).forEach((point) => {
-        nextCyclePointsToCheck.set(`${point.x}_${point.y}`, point)
+      Object.values(neighbours).forEach((point) => {
+        const realPoint = getPointPosition({point, maxCellCountHeight, maxCellCountWidth})
+        nextCyclePointsToCheck[`${realPoint.y}_${realPoint.x}`] = realPoint
       })
     }
   })
   return {
     newAliveMap,
-    nextCyclePointsToCheck: Object.values(Object.fromEntries(nextCyclePointsToCheck))
+    nextCyclePointsToCheck: Object.values(nextCyclePointsToCheck)
   }
 }
 
