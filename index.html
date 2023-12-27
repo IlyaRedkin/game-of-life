@@ -26,6 +26,8 @@
 </script>
 <script>
   // util variables
+  let minX
+  let minY
   let inputHorizontal
   let inputVertical
 </script>
@@ -45,12 +47,14 @@
     visibleAreaContainer = document.querySelector(".canvas-wrapper");
     // defaults
     const widthField = document.getElementById("field-width")
-    widthField.ariaValueMin  = visibleAreaContainer?.clientWidth;
+    minX = visibleAreaContainer?.clientWidth;
     widthField.value  = visibleAreaContainer?.clientWidth;
+    widthPx = visibleAreaContainer?.clientWidth;
 
     const heightField = document.getElementById("field-height")
-    heightField.ariaValueMin = visibleAreaContainer?.clientHeight;
+    minY = visibleAreaContainer?.clientHeight;
     heightField.value = visibleAreaContainer?.clientHeight;
+    heightPx = visibleAreaContainer?.clientHeight;
   }
 
   function updateCanvasContext() {
@@ -134,6 +138,7 @@
     updateGridHandler()
 
     canvasElement.addEventListener("mousemove", (event) => {
+      if (intervalId) return
       updateGridHandler()
       const formOfLife = FORM_LIFE_COLLECTION[selectedFormOfLife || 'single']
       canvasContext.beginPath();
@@ -147,6 +152,7 @@
     });
 
     canvasElement.addEventListener("click", (event) => {
+      if (intervalId) return
       const formOfLife = FORM_LIFE_COLLECTION[selectedFormOfLife || 'single']
       putNewFormOfLifeIntoPool(
         cycleAliveMap,
@@ -195,11 +201,13 @@
   }
   const pauseGame = () => {
     clearInterval(intervalId)
+    intervalId = null
   }
   const resetGame = () => {
     clearInterval(intervalId)
+    intervalId = null
     cycleAliveMap = {}
-    clearCanvas()
+    updateGridHandler()
   }
 </script>
 
@@ -231,22 +239,29 @@
           <label for="field-width">Width (px):</label>
           <input id="field-width" name="field-width" type="number" onkeyup="onWidthChange(this)"/>
           <script>
+            const fieldWidth = document.getElementById("field-width")
+            fieldWidth.value = widthPx;
+
             const onWidthChange = (input) => {
-              widthPx = Number(input.value)
+              const v = Number(input.value)
+              widthPx = v < minX ? minX : v
+              fieldWidth.value = widthPx.toString();
               updateDrawSize()
             }
-            document.getElementById("field-width").value = widthPx;
           </script>
         </div>
         <div class="field-height-input">
           <label for="field-height">Height (px):</label>
           <input id="field-height" name="field-height" type="number" onkeyup="onHeightChange(this)"/>
           <script>
+            const fieldHeight = document.getElementById("field-height")
+            fieldHeight.value = heightPx;
             const onHeightChange = (input) => {
-              heightPx = Number(input.value)
+              const v = Number(input.value)
+              heightPx = v < minY ? minY : v
+              fieldHeight.value = heightPx.toString();
               updateDrawSize()
             }
-            document.getElementById("field-height").value = heightPx;
           </script>
         </div>
         <div class="cell-size-input">
@@ -254,7 +269,7 @@
           <input id="cell-size" name="cell-size" type="number" onkeyup="onCellSizeChange(this)"/>
           <script>
             const onCellSizeChange = (input) => {
-              cellSizePx = Number(input.value)
+              cellSizePx = Number(input.value) || 1
               updateGridHandler()
             }
             document.getElementById("cell-size").value = cellSizePx;
