@@ -10,6 +10,9 @@
 <script type="text/javascript" src="utils.js"></script>
 <script type="text/javascript" src="figures/glider.js"></script>
 <script type="text/javascript" src="figures/planner.js"></script>
+<script type="text/javascript" src="figures/single.js"></script>
+<script type="text/javascript" src="figures/empty.js"></script>
+<script type="text/javascript" src="figures/collection.js"></script>
 <script type="text/javascript" src="index.js"></script>
 <script type="text/javascript" src="canvas.js"></script>
 <script>
@@ -18,6 +21,12 @@
   let heightPx = 500;
   let cellSizePx = 10;
   let intervalTime = 10;
+  let selectedFormOfLife = null;
+  let cycleAliveMap = {};
+</script>
+<script>
+  // util variables
+  let referencePoint = {y: 0, x:0};
 </script>
 <script>
   window.onload = function () {
@@ -39,6 +48,10 @@
     canvasContext = getCanvasContext({width: scrollContainer?.clientWidth, height: scrollContainer?.clientHeight})
   }
 
+  function clearCanvas () {
+    canvasContext.clearRect(0, 0, scrollContainer?.clientWidth, scrollContainer?.clientHeight)
+  }
+
   function updateFieldArea() {
     scrollEl = document.querySelector("#field-area");
     scrollEl.style.width = `${widthPx}px`
@@ -47,7 +60,17 @@
     from = {x: 0, y: 0};
     to = {x: widthPx, y: heightPx}
 
-    canvasContext.clearRect(0, 0, scrollContainer?.clientWidth, scrollContainer?.clientHeight)
+    clearCanvas()
+  }
+
+  function updateGridHandler() {
+    clearCanvas()
+    updateGrid({
+      from,
+      to,
+      context: canvasContext,
+      dataMap: cycleAliveMap
+    });
   }
 
   function initPage() {
@@ -60,12 +83,32 @@
       from = {x: scrollLeft, y: scrollTop};
       to = {x: scrollLeft + clientWidth, y: scrollTop + clientHeight};
     });
+
+    const canvasElement = document.querySelector('#canvas');
+    canvasElement.addEventListener("mousemove", (event) => {
+      updateGridHandler()
+      const formOfLife = FORM_LIFE_COLLECTION[selectedFormOfLife || 'single']
+      canvasContext.beginPath();
+      canvasContext.strokeStyle = 'red';
+      canvasContext.strokeRect(event.offsetX, event.offsetY, cellSizePx, cellSizePx);
+      drawLifeForm({ x: event.offsetX, y: event.offsetY}, formOfLife, canvasContext)
+      referencePoint = {y: parseInt(event.offsetY/cellSizePx, 10), x: parseInt(event.offsetX/cellSizePx, 10)}
+    });
+
+    canvasElement.addEventListener("mouseout", () => {
+      updateGridHandler()
+    });
+
+    canvasElement.addEventListener("click", () => {
+      const formOfLife = FORM_LIFE_COLLECTION[selectedFormOfLife || 'single']
+      putNewFormOfLifeIntoPool(cycleAliveMap, formOfLife, referencePoint)
+      updateGridHandler()
+    });
   }
 </script>
 <script>
   let intervalId
   let count = 0
-  let cycleAliveMap
   let pointsToCheck
   const getCycles = (data) => {
     cycleAliveMap = data
@@ -95,11 +138,21 @@
   }
 
   const startGame = () => {
-    getCycles(plannerMap)
-    // getCycles(gliderMap)
+    getCycles(cycleAliveMap)
+    const canvasElement = document.querySelector('#canvas');
+    canvasElement.style.zIndex = '1'
   }
-  const stopGame = () => {
+  const pauseGame = () => {
     clearInterval(intervalId)
+    const canvasElement = document.querySelector('#canvas');
+    canvasElement.style.zIndex = 'initial'
+  }
+  const resetGame = () => {
+    clearInterval(intervalId)
+    cycleAliveMap = {}
+    const canvasElement = document.querySelector('#canvas');
+    canvasElement.style.zIndex = 'initial'
+    clearCanvas()
   }
 
   const updateField = () => {
@@ -120,10 +173,22 @@
     <div class="field-controls">
       <div class="life-controls">
         <button onclick="startGame()">Start life</button>
-        <button onclick="stopGame()">Stop life</button>
+        <button onclick="pauseGame()">Pause life</button>
+        <button onclick="resetGame()">Reset life</button>
       </div>
       <div class="forms-of-life">
         <div>Forms of life:</div>
+        <select size="4" name="form-of-life" id="form-of-life" onchange="onFormLifeChange(this)">
+          <option selected value="single">Single</option>
+          <option value="glider">Glider</option>
+          <option value="planner">Planner</option>
+          <option value="empty">Empty</option>
+        </select>
+        <script>
+          const onFormLifeChange = (input) => {
+            selectedFormOfLife = input.value
+          }
+        </script>
       </div>
       <div class="field-inputs">
         <div>Field options:</div>

@@ -14,13 +14,11 @@ const getFieldSize = ({ width: widthCount, height: heightCount }) => {
   return { width, height }
 }
 
-const drawGrid = ({ i, j, x, y, context, dataMap }) => {
-  const startXpx = j * cellSizePx;
-  const startYpx = i * cellSizePx;
+const drawGrid = ({ y, x, context, pointState }) => {
     // "life" rect
   context.beginPath();
-  context.fillStyle = dataMap?.[y]?.[x] === '1' ? '#000000' : '#FFFFFF';
-  context.fillRect(startXpx, startYpx, cellSizePx, cellSizePx);
+  context.fillStyle = pointState === '1' ? '#000000' : '#FFFFFF';
+  context.fillRect(x, y, cellSizePx, cellSizePx);
 }
 
 const getCellPoint = (px) => parseInt(px/cellSizePx, 10)
@@ -34,7 +32,25 @@ const updateGrid = ({ from, to, context, dataMap }) => {
 
   for (let i = iFrom; i < iTo; i++) {
     for (let j = jFrom; j < jTo; j++) {
-      drawGrid({ y: i, x: j, i: i - iFrom, j: j - jFrom,  context, dataMap })
+      drawGrid({
+        y: (i - iFrom) * cellSizePx,
+        x: (j - jFrom) * cellSizePx,
+        context,
+        pointState: dataMap?.[i]?.[j]
+      })
     }
   }
+}
+
+const drawLifeForm = (startPoint, lifeMap, context) => {
+  Object.entries(lifeMap).forEach(([indexY, lineX]) => {
+    Object.entries(lineX).forEach(([indexX, state]) => {
+      drawGrid({
+        y: startPoint.y + Number(indexY) * cellSizePx ,
+        x: startPoint.x + Number(indexX) * cellSizePx,
+        context,
+        pointState: state
+      })
+    })
+  }, [])
 }

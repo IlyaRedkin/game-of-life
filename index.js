@@ -117,28 +117,15 @@ const getPointsToCheck = (data) => {
   return [...pointList, ...initialNeighbours]
 }
 
-// const getCyclesLocal = (data) => {
-//   let count = 0
-//   let cycleAliveMap = data
-//   const pointsToCheck = getPointsToCheck(data)
-//   while(count < 10) {
-//     cycleAliveMap = getCycle({pointsToCheck, mapHeight: 100, mapWidth: 100, aliveMap: cycleAliveMap})
-//     count += 1
-//   }
-//   return cycleAliveMap
-// }
-
-// const plannerMap = {
-//   0: {
-//     1: '1'
-//   },
-//   1: {
-//     1: '1',
-//     2: '1'
-//   },
-//   2: {
-//     0: '1',
-//     1: '1'
-//   }
-// }
-// console.log('getCyclesLocal', getCyclesLocal(plannerMap))
+const putNewFormOfLifeIntoPool = (pool, formLifeMap, referencePoint) => {
+  Object.entries(formLifeMap).forEach(([indexY, xLine]) => {
+    Object.entries(xLine).forEach(([indexX, state]) => {
+      const y = Number(referencePoint.y) + Number(indexY)
+      const x = Number(referencePoint.x) + Number(indexX)
+      if (!pool[y]) {
+        pool[y] = {}
+      }
+      pool[y][x] = state
+    })
+  })
+}

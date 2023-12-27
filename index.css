@@ -16,6 +16,8 @@
 #field-area {}
 #canvas {
   /*position: absolute;*/
+  cursor: none;
+  z-index: 1;
 }
 
 .field-controls {
