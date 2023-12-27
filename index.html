@@ -13,6 +13,7 @@
 <script type="text/javascript" src="figures/train.js"></script>
 <script type="text/javascript" src="figures/single.js"></script>
 <script type="text/javascript" src="figures/empty.js"></script>
+<script type="text/javascript" src="figures/random.js"></script>
 <script type="text/javascript" src="figures/collection.js"></script>
 <script type="text/javascript" src="index.js"></script>
 <script type="text/javascript" src="canvas.js"></script>
@@ -23,6 +24,7 @@
   let cellSizePx = 10;
   let intervalTime = 100;
   let selectedFormOfLife = null;
+  let randomLifeForm = null;
   let cycleAliveMap = {};
 </script>
 <script>
@@ -49,7 +51,7 @@
     // defaults
     const widthField = document.getElementById("field-width")
     minX = visibleAreaContainer?.clientWidth;
-    widthField.value  = visibleAreaContainer?.clientWidth;
+    widthField.value = visibleAreaContainer?.clientWidth;
     widthPx = visibleAreaContainer?.clientWidth;
 
     const heightField = document.getElementById("field-height")
@@ -74,6 +76,7 @@
 
   let borderW
   let borderH
+
   function getDrawAreaDimensions() {
     borderW = visibleAreaContainer?.clientWidth
     borderH = visibleAreaContainer?.clientHeight
@@ -90,7 +93,7 @@
     updateGridHandler()
   }
 
-  function moveDrawArea({ yOffset, xOffset }) {
+  function moveDrawArea({yOffset, xOffset}) {
     getDrawAreaDimensions()
     from = {
       x: xOffset === null ? from.x : xOffset,
@@ -99,9 +102,10 @@
     to = {
       x: xOffset === null ? to.x : xOffset + borderW,
       y: yOffset === null ? to.y : yOffset + borderH,
-  }
+    }
     updateGridHandler()
   }
+
   function drawAreaBorder() {
     getDrawAreaDimensions()
     // canvas border
@@ -109,6 +113,7 @@
     canvasContext.strokeStyle = 'black';
     canvasContext.strokeRect(0, 0, borderW, borderH)
   }
+
   function updateGridHandler() {
     clearCanvas()
     updateGrid({
@@ -131,6 +136,11 @@
     inputVertical.value = '0'
   }
 
+  function getFormOfLife(selected) {
+    return selected === 'random' ? randomLifeForm
+      : FORM_LIFE_COLLECTION[selected || 'single']
+  }
+
   function initPage() {
     updateScrollContainer()
     updateCanvasContext()
@@ -141,7 +151,7 @@
     canvasElement.addEventListener("mousemove", (event) => {
       if (intervalId) return
       updateGridHandler()
-      const formOfLife = FORM_LIFE_COLLECTION[selectedFormOfLife || 'single']
+      const formOfLife = getFormOfLife(selectedFormOfLife)
       canvasContext.beginPath();
       canvasContext.strokeStyle = 'red';
       canvasContext.strokeRect(event.offsetX, event.offsetY, cellSizePx, cellSizePx);
@@ -154,7 +164,7 @@
 
     canvasElement.addEventListener("click", (event) => {
       if (intervalId) return
-      const formOfLife = FORM_LIFE_COLLECTION[selectedFormOfLife || 'single']
+      const formOfLife = getFormOfLife(selectedFormOfLife)
       putNewFormOfLifeIntoPool(
         cycleAliveMap,
         formOfLife,
@@ -228,10 +238,14 @@
           <option value="glider">Glider</option>
           <option value="planner">Planner</option>
           <option value="empty">Empty</option>
+          <option value="random">Random</option>
         </select>
         <script>
           const onFormLifeChange = (input) => {
             selectedFormOfLife = input.value
+            if (selectedFormOfLife === 'random') {
+              randomLifeForm = getRandomFormLife()
+            }
           }
         </script>
       </div>
@@ -300,7 +314,7 @@
     <script>
       const onVerticalChange = (input) => {
         const vValue = Number(input.value);
-        moveDrawArea({ yOffset: vValue, xOffset: null });
+        moveDrawArea({yOffset: vValue, xOffset: null});
       }
     </script>
   </div>
@@ -308,7 +322,7 @@
   <script>
     const onHorizontalChange = (input) => {
       const hValue = Number(input.value);
-      moveDrawArea({ xOffset: hValue, yOffset: null });
+      moveDrawArea({xOffset: hValue, yOffset: null});
     }
   </script>
 </div>
