@@ -17,52 +17,93 @@
 <script type="text/javascript" src="canvas.js"></script>
 <script>
   // defaults
-  let widthPx = 500;
-  let heightPx = 500;
+  let widthPx = 0;
+  let heightPx = 0;
   let cellSizePx = 10;
-  let intervalTime = 10;
+  let intervalTime = 100;
   let selectedFormOfLife = null;
   let cycleAliveMap = {};
 </script>
 <script>
   // util variables
-  let referencePoint = {y: 0, x:0};
+  let inputHorizontal
+  let inputVertical
 </script>
 <script>
   window.onload = function () {
     initPage();
   };
 
-  let scrollContainer
+  let visibleAreaContainer
+  let canvasElement
   let canvasContext
-  let scrollEl
 
   let from = {x: 0, y: 0}
   let to = {x: widthPx, y: heightPx}
 
   function updateScrollContainer() {
-    scrollContainer = document.querySelector("#scroll-container");
+    visibleAreaContainer = document.querySelector(".canvas-wrapper");
+    // defaults
+    const widthField = document.getElementById("field-width")
+    widthField.ariaValueMin  = visibleAreaContainer?.clientWidth;
+    widthField.value  = visibleAreaContainer?.clientWidth;
+
+    const heightField = document.getElementById("field-height")
+    heightField.ariaValueMin = visibleAreaContainer?.clientHeight;
+    heightField.value = visibleAreaContainer?.clientHeight;
   }
 
   function updateCanvasContext() {
-    canvasContext = getCanvasContext({width: scrollContainer?.clientWidth, height: scrollContainer?.clientHeight})
+    const width = visibleAreaContainer?.clientWidth
+    const height = visibleAreaContainer?.clientHeight
+    canvasElement = document.querySelector('#canvas');
+    canvasElement.width = width;
+    canvasElement.height = height;
+
+    canvasContext = canvasElement.getContext('2d');
   }
 
-  function clearCanvas () {
-    canvasContext.clearRect(0, 0, scrollContainer?.clientWidth, scrollContainer?.clientHeight)
+  function clearCanvas() {
+    canvasContext.clearRect(0, 0, visibleAreaContainer?.clientWidth, visibleAreaContainer?.clientHeight)
   }
 
-  function updateFieldArea() {
-    scrollEl = document.querySelector("#field-area");
-    scrollEl.style.width = `${widthPx}px`
-    scrollEl.style.height = `${heightPx}px`
+  let borderW
+  let borderH
+  function getDrawAreaDimensions() {
+    borderW = visibleAreaContainer?.clientWidth
+    borderH = visibleAreaContainer?.clientHeight
+  }
 
+  function updateDrawSize() {
+    getDrawAreaDimensions()
     from = {x: 0, y: 0};
-    to = {x: widthPx, y: heightPx}
+    to = {x: borderW, y: borderH}
 
-    clearCanvas()
+    inputVertical.value = '0'
+    inputHorizontal.value = '0'
+    updateScrollInputs()
+    updateGridHandler()
   }
 
+  function moveDrawArea({ yOffset, xOffset }) {
+    getDrawAreaDimensions()
+    from = {
+      x: xOffset === null ? from.x : xOffset,
+      y: yOffset === null ? from.y : yOffset,
+    };
+    to = {
+      x: xOffset === null ? to.x : xOffset + borderW,
+      y: yOffset === null ? to.y : yOffset + borderH,
+  }
+    updateGridHandler()
+  }
+  function drawAreaBorder() {
+    getDrawAreaDimensions()
+    // canvas border
+    canvasContext.beginPath();
+    canvasContext.strokeStyle = 'black';
+    canvasContext.strokeRect(0, 0, borderW, borderH)
+  }
   function updateGridHandler() {
     clearCanvas()
     updateGrid({
@@ -71,37 +112,49 @@
       context: canvasContext,
       dataMap: cycleAliveMap
     });
+    drawAreaBorder()
+  }
+
+  function updateScrollInputs() {
+    inputHorizontal = document.querySelector("#horizontal");
+    inputVertical = document.querySelector("#vertical");
+
+    inputHorizontal.max = Math.max(widthPx - borderW, 0)
+    inputHorizontal.value = '0'
+
+    inputVertical.max = Math.max(heightPx - borderH, 0)
+    inputVertical.value = '0'
   }
 
   function initPage() {
     updateScrollContainer()
     updateCanvasContext()
-    updateFieldArea()
+    updateScrollInputs()
+    updateDrawSize()
+    updateGridHandler()
 
-    scrollContainer.addEventListener("scroll", (event) => {
-      const {scrollTop, scrollLeft, clientWidth, clientHeight} = event.target || {};
-      from = {x: scrollLeft, y: scrollTop};
-      to = {x: scrollLeft + clientWidth, y: scrollTop + clientHeight};
-    });
-
-    const canvasElement = document.querySelector('#canvas');
     canvasElement.addEventListener("mousemove", (event) => {
       updateGridHandler()
       const formOfLife = FORM_LIFE_COLLECTION[selectedFormOfLife || 'single']
       canvasContext.beginPath();
       canvasContext.strokeStyle = 'red';
       canvasContext.strokeRect(event.offsetX, event.offsetY, cellSizePx, cellSizePx);
-      drawLifeForm({ x: event.offsetX, y: event.offsetY}, formOfLife, canvasContext)
-      referencePoint = {y: parseInt(event.offsetY/cellSizePx, 10), x: parseInt(event.offsetX/cellSizePx, 10)}
+      drawLifeForm({x: event.offsetX, y: event.offsetY}, formOfLife, canvasContext)
     });
 
     canvasElement.addEventListener("mouseout", () => {
       updateGridHandler()
     });
 
-    canvasElement.addEventListener("click", () => {
+    canvasElement.addEventListener("click", (event) => {
       const formOfLife = FORM_LIFE_COLLECTION[selectedFormOfLife || 'single']
-      putNewFormOfLifeIntoPool(cycleAliveMap, formOfLife, referencePoint)
+      putNewFormOfLifeIntoPool(
+        cycleAliveMap,
+        formOfLife,
+        {
+          y: parseInt((event.offsetY + from.y) / cellSizePx, 10),
+          x: parseInt((event.offsetX + from.x) / cellSizePx, 10)
+        })
       updateGridHandler()
     });
   }
@@ -125,7 +178,6 @@
       })
       pointsToCheck = nextCyclePointsToCheck
       cycleAliveMap = newAliveMap
-      console.log('nextCyclePointsToCheck', nextCyclePointsToCheck.length)
       count += 1
 
       updateGrid({
@@ -134,37 +186,20 @@
         context: canvasContext,
         dataMap: cycleAliveMap
       });
+      drawAreaBorder()
     }, intervalTime)
   }
 
   const startGame = () => {
     getCycles(cycleAliveMap)
-    const canvasElement = document.querySelector('#canvas');
-    canvasElement.style.zIndex = '1'
   }
   const pauseGame = () => {
     clearInterval(intervalId)
-    const canvasElement = document.querySelector('#canvas');
-    canvasElement.style.zIndex = 'initial'
   }
   const resetGame = () => {
     clearInterval(intervalId)
     cycleAliveMap = {}
-    const canvasElement = document.querySelector('#canvas');
-    canvasElement.style.zIndex = 'initial'
     clearCanvas()
-  }
-
-  const updateField = () => {
-    updateScrollContainer()
-    updateCanvasContext()
-    updateFieldArea()
-
-    updateGrid({
-      from,
-      to,
-      context: canvasContext
-    });
   }
 </script>
 
@@ -198,6 +233,7 @@
           <script>
             const onWidthChange = (input) => {
               widthPx = Number(input.value)
+              updateDrawSize()
             }
             document.getElementById("field-width").value = widthPx;
           </script>
@@ -208,6 +244,7 @@
           <script>
             const onHeightChange = (input) => {
               heightPx = Number(input.value)
+              updateDrawSize()
             }
             document.getElementById("field-height").value = heightPx;
           </script>
@@ -218,6 +255,7 @@
           <script>
             const onCellSizeChange = (input) => {
               cellSizePx = Number(input.value)
+              updateGridHandler()
             }
             document.getElementById("cell-size").value = cellSizePx;
           </script>
@@ -228,21 +266,34 @@
           <script>
             const onIntervalTimeChange = (input) => {
               intervalTime = Number(input.value)
+              updateGridHandler()
             }
             document.getElementById("interval-time").value = intervalTime;
           </script>
         </div>
-        <button onclick="updateField()">Apply field size</button>
       </div>
     </div>
 
   </div>
-  <div class="canvas-wrapper">
-    <canvas id="canvas"></canvas>
+  <div class="canvas-container">
+    <div class="canvas-wrapper">
+      <canvas id="canvas"></canvas>
+    </div>
+    <input id="vertical" type="range" min="0" max="3.14" step="any" onchange="onVerticalChange(this)"/>
+    <script>
+      const onVerticalChange = (input) => {
+        const vValue = Number(input.value);
+        moveDrawArea({ yOffset: vValue, xOffset: null });
+      }
+    </script>
   </div>
-  <div id="scroll-container">
-    <div id="field-area"></div>
-  </div>
+  <input id="horizontal" type="range" min="0" max="3.14" step="any" onchange="onHorizontalChange(this)"/>
+  <script>
+    const onHorizontalChange = (input) => {
+      const hValue = Number(input.value);
+      moveDrawArea({ xOffset: hValue, yOffset: null });
+    }
+  </script>
 </div>
 </body>
 </html>

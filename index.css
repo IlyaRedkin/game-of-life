@@ -2,22 +2,18 @@
   position: relative;
 }
 
-.canvas-wrapper {
+.canvas-container {
   margin-top: 16px;
+  display: flex;
 }
-#scroll-container {
-  margin-top: 16px;
-  position: relative;
+.canvas-wrapper {
   width: 1100px;
   height: 600px;
-  overflow: auto;
 }
 
 #field-area {}
 #canvas {
-  /*position: absolute;*/
   cursor: none;
-  z-index: 1;
 }
 
 .field-controls {
@@ -38,4 +34,12 @@
 
 .life-controls button {
   height: 100%;
+}
+
+#horizontal {
+  width: 1100px;
+}
+#vertical {
+  appearance: slider-vertical;
+  transform: rotate(180deg);
 }
