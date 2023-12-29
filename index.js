@@ -80,6 +80,7 @@ const setAliveMapValue = (aliveMap, point, state, maxCellCountHeight, maxCellCou
 const getCycle = ({pointsToCheck, maxCellCountHeight, maxCellCountWidth, aliveMap}) => {
   const newAliveMap = {}
   const nextCyclePointsToCheck = {}
+  const mapUpdates = {}
   pointsToCheck.forEach((pointToCheck) => {
     const neighbours = getNeighbours(pointToCheck)
     const checkedPointState = getPointState({
@@ -90,7 +91,11 @@ const getCycle = ({pointsToCheck, maxCellCountHeight, maxCellCountWidth, aliveMa
       neighbours
     })
     setAliveMapValue(newAliveMap, pointToCheck, checkedPointState, maxCellCountHeight, maxCellCountWidth)
-    if (getState(pointToCheck, aliveMap) !== checkedPointState || checkedPointState === POINT_STATE.ALIVE) {
+    const stateFlipped = getState(pointToCheck, aliveMap) !== checkedPointState
+    if (stateFlipped) {
+      setAliveMapValue(mapUpdates, pointToCheck, checkedPointState, maxCellCountHeight, maxCellCountWidth)
+    }
+    if (stateFlipped || checkedPointState === POINT_STATE.ALIVE) {
       Object.values(neighbours).forEach((point) => {
         const realPoint = getPointPosition({point, maxCellCountHeight, maxCellCountWidth})
         nextCyclePointsToCheck[`${realPoint.y}_${realPoint.x}`] = realPoint
@@ -99,7 +104,8 @@ const getCycle = ({pointsToCheck, maxCellCountHeight, maxCellCountWidth, aliveMa
   })
   return {
     newAliveMap,
-    nextCyclePointsToCheck: Object.values(nextCyclePointsToCheck)
+    nextCyclePointsToCheck: Object.values(nextCyclePointsToCheck),
+    mapUpdates
   }
 }
 

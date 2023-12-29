@@ -116,7 +116,7 @@
 
   function updateGridHandler() {
     clearCanvas()
-    updateGrid({
+    redrawGrid({
       from,
       to,
       context: canvasContext,
@@ -159,6 +159,7 @@
     });
 
     canvasElement.addEventListener("mouseout", () => {
+      if (intervalId) return
       updateGridHandler()
     });
 
@@ -186,7 +187,8 @@
     intervalId = setInterval(() => {
       const {
         newAliveMap,
-        nextCyclePointsToCheck
+        nextCyclePointsToCheck,
+        mapUpdates
       } = getCycle({
         pointsToCheck,
         maxCellCountHeight: heightPx / cellSizePx,
@@ -201,7 +203,7 @@
         from,
         to,
         context: canvasContext,
-        dataMap: cycleAliveMap
+        dataMap: mapUpdates
       });
       drawAreaBorder()
     }, intervalTime)
